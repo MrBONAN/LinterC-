@@ -23,16 +23,20 @@ class Tokenizer:
             if char.isalnum() or char == '_':
                 current_token = self.read_word()
                 spaces = self.read_spaces()
-                tokens.append(Token(current_token, "nothing", spaces))
+                if current_token in keywords:
+                    tokens.append(Token(current_token, TokenType.Keyword, spaces))
+                else:
+                    tokens.append(Token(current_token, TokenType.Identifier, spaces))
             elif char == '"':
                 current_token = self.read_string_constant()
                 spaces = self.read_spaces()
                 if current_token != '':
-                    tokens.append(Token(current_token, "nothing", spaces))
+                    tokens.append(Token(current_token, TokenType.StringConstant, spaces))
             elif char.isspace():
                 self.read_spaces()
             else:
                 self.index += 1
+                tokens.append(Token(char, TokenType.Symbol, self.read_spaces()))
         return tokens
 
     def read_spaces(self):
@@ -55,14 +59,15 @@ class Tokenizer:
 
     def read_string_constant(self):
         string = ''
+        self.index += 1
         start = self.index
         for char in self.code[start:]:
             if char != '"':
                 string += char
                 self.index += 1
             else:
-                self.index += 1
                 break
+        self.index += 1
         return string
 
 
