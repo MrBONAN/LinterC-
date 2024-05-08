@@ -21,8 +21,7 @@ class MyTestCase(unittest.TestCase):
         """
 
         parser = tokenizer.Tokenizer(csharp_code)
-        for token in parser.tokenize():
-            #print(f'{token.value} - {token.token_type}, right space: "{token.right_space}"')
+        for token in parser.get_tokens():
             print((f'{token.value} - {token.token_type}'))
 
 
