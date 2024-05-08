@@ -23,34 +23,10 @@ class Tokenizer:
     def get_tokens(self):
         self.tokens = []
         while self.index < len(self.code):
-            # any([self.try_read_token_word(),
-            #     self.try_read_string_constant(),
-            #     self.try_read_operator(),
-            #     self.skip_spaces()])
-            # continue
-            char = self.code[self.index]
-            if char.isalnum() or char == '_':
-                current_token = self.read_word()
-                spaces = self.read_spaces()
-                if current_token in Tokenizer.KEYWORDS:
-                    self.tokens.append(Token(current_token, TokenType.Keyword, spaces))
-                else:
-                    self.tokens.append(Token(current_token, TokenType.Identifier, spaces))
-            elif char == '"':
-                current_token = self.read_string_constant()
-                spaces = self.read_spaces()
-                if current_token != '':
-                    self.tokens.append(Token(current_token, TokenType.StringConstant, spaces))
-            elif char.isspace():
-                self.read_spaces()
-            else:
-                isOperator = self.try_read_operator()
-                if isOperator:
-                    self.tokens.append(Token(char, TokenType.Symbol, self.read_spaces()))
-                else:
-                    self.index += 1
-                    self.tokens.append(
-                        Token(char, TokenType.Symbol, self.read_spaces()))
+            any([self.try_read_token_word(),
+                self.try_read_string_constant(),
+                self.try_read_operator(),
+                self.read_symbol()])
         return self.tokens
 
     def try_read_token_word(self):
@@ -87,7 +63,7 @@ class Tokenizer:
 
     def skip_spaces(self):
         self.read_spaces()
-        return False
+        return True
 
     def read_spaces(self):
         spaces = ''
