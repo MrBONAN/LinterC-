@@ -50,21 +50,13 @@ class Settings:
                     if t.token_type == tokenizer.TokenType.Space:
                         continue
                     elif t.value == 'return':
-                        if empty_line_count != 1:
-                            res.append(f'Line {i+1}: there must be 1 empty line before the return (expected: {empty_line_count})')
+                        if empty_line_count != int(value):
+                            res.append(f'Line {i+1}: there must be {int(value)} empty line before the return (expected: {empty_line_count})')
                         is_prev_line_empty = False
-
-
-
-
+        return res
 
 
 class Stylecheck:
     def check(self, lines, settings):  # lines[tokens[Token]], Dict
         raise Exception
 
-
-if (expr)
-    {
-
-    }
