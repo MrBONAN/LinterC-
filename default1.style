@@ -2,6 +2,8 @@
   "indent_style": "spaces",
   "indent_size": 2,
   "max_line_length": 100,
+  "brace_style": "1tbs",
+  "space_before_function_paren": true,
   "newline_before_return": true,
   "newline_per_chained_call": true,
   "require_semicolons": true,
