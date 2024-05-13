@@ -55,11 +55,23 @@ class MyTestCase(unittest.TestCase):
             self.assertEqual(op, token.value)
 
     def test_dont_delete_newline_character(self):
-        comment = """some_string
+        string = """some_string
 with_newline_character"""
-        result = self.get_tokens(comment)
+        result = self.get_tokens(string)
         self.assertEqual(2, len(result))
         self.assertEqual('\n', result[0].right_space)
+
+    def test_dont_delete_newline_character_in_string(self):
+        string = '''"some_string
+with_newline_character"'''
+        result = self.get_tokens(string)
+        self.assertEqual(1, len(result))
+        self.assertEqual('\n', result[0].value[11])
+
+    def test_have_not_closing_quotation_mark(self):
+        string = """'very big string without closing quotation mark"""
+        result = self.get_tokens(string)
+        self.assertEqual(7, len(result))
 
     def test_if_statement(self):
         if_statement = """

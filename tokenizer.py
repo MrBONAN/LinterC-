@@ -46,7 +46,7 @@ class Tokenizer:
 
     def _try_read_string_constant(self):
         char = self._code[self._index]
-        if char != '"':
+        if char != '\"' and char != '\'':
             return False
         current_token = self._read_string_constant()
         spaces = self._read_spaces()
@@ -98,14 +98,19 @@ class Tokenizer:
 
     def _read_string_constant(self):
         string = ''
+        open_quotation_mark = self._code[self._index]
         self._index += 1
         start = self._index
         for char in self._code[start:]:
-            if char != '"':
+            if char != open_quotation_mark:
                 string += char
                 self._index += 1
             else:
                 break
+        # если не нашли закрывающую кавычку (неправильно написанный код)
+        else:
+            self._index = start
+            return self._read_word()
         self._index += 1
         return string
 
