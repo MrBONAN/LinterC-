@@ -5,7 +5,7 @@ namespace StylisticExample
 {
     public static class Example
     {
-        №public static List<string> Calculate(List<string> first, List<string> second)
+        public static List<string> Calculate(List<string> first, List<string> second)
         {
             var a = DoSomething(first, second);
             return new List<string>();
