@@ -35,20 +35,16 @@ class Tokenizer:
         return self._tokens
 
     def get_lines(self):
-        self.tokens = self.get_tokens()
-        lines = []
-        line_number = 1
-        column_number = 1
-        for token in self.tokens:
-            space = token._right_space
-            token.row = line_number
-            token.column = column_number
-            for char in token.value:
-                if char == '\n':
-                    line_number += 1
-                    column_number = 1
-                else:
-                    column_number += 1
+        tokens = self.get_tokens()
+        prev_line = tokens[0].row
+        lines = [[]]
+        for token in tokens:
+            if token.row == prev_line:
+                lines[-1].append(token)
+            else:
+                prev_line = token.row
+                lines.append([token])
+        return lines
 
     def _try_read_space_token(self):
         space = self._read_spaces()
@@ -139,6 +135,8 @@ class Tokenizer:
         self._index += 1
         start = self._index
         for char in self._code[start:]:
+            if char == '\n':
+                self._row += 1
             if char != open_quotation_mark:
                 string += char
                 self._index += 1
@@ -164,6 +162,7 @@ class Tokenizer:
         index = self._index
         for index in range(self._index, len(self._code)):
             if self._code[index] == '\n':
+                self._row += 1
                 break
         start = self._index
         self._index = index
@@ -173,6 +172,8 @@ class Tokenizer:
     def _read_multiline_comment(self):
         for index in range(self._index, len(self._code)):
             if index + 1 < len(self._code) and self._code[index:index + 2] == '*/':
+                if self._code[index] == '\n':
+                    self._row += 1
                 start = self._index
                 self._index = index + 2
                 self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))

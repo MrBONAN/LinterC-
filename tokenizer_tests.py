@@ -7,10 +7,19 @@ class MyTestCase(unittest.TestCase):
         parser = tokenizer.Tokenizer(csharp_code)
         return parser.get_tokens()
 
+    def get_lines(self, csharp_code):
+        parser = tokenizer.Tokenizer(csharp_code)
+        return parser.get_lines()
+
     def print_tokens(self, tokens):
         for token in tokens:
             if token.token_type is not tokenizer.TokenType.Space:
                 print((f'{token.value} - {token.token_type}'))
+
+    def print_lines(self, lines):
+        for line in lines:
+            print(f"row: {line[0].row}")
+            self.print_tokens(line)
 
     def _filter_space_tokens(self, tokens):
         return [token for token in tokens if token.token_type is not tokenizer.TokenType.Space]
@@ -38,8 +47,10 @@ class MyTestCase(unittest.TestCase):
                     }
                 }
                 """
-        result = self.get_tokens(large_csharp_code)
-        self.print_tokens(result)
+        # result = self.get_tokens(large_csharp_code)
+        # self.print_tokens(result)
+        result = self.get_lines(large_csharp_code)
+        self.print_lines(result)
 
     def test_space_tokens(self):
         code = """some_code 
