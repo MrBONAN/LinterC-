@@ -6,12 +6,11 @@ TokenType = Enum('TokenType', ['Symbol', 'Keyword', 'NumberConstant',
 
 
 class Token:
-    def __init__(self, value, token_type, right_space='', row=0, column=0):
+    def __init__(self, value, token_type, row=0, column=0):
         self.value = value
         self.token_type = token_type
         self.row = row
         self.column = column
-        self.right_space = right_space
 
 
 class Tokenizer:
@@ -19,12 +18,13 @@ class Tokenizer:
         self._code = code
         self._index = 0
         self._tokens = []
+        self._row = 1
 
     def get_tokens(self):
         self._tokens = []
-        self._read_spaces()
         while self._index < len(self._code):
-            for i in [self._try_read_number,
+            for i in [self._try_read_space_token,
+                      self._try_read_number,
                       self._try_read_token_word,
                       self._try_read_comment,
                       self._try_read_string_constant,
@@ -34,25 +34,60 @@ class Tokenizer:
                     break
         return self._tokens
 
+    def get_lines(self):
+        self.tokens = self.get_tokens()
+        lines = []
+        line_number = 1
+        column_number = 1
+        for token in self.tokens:
+            space = token._right_space
+            token.row = line_number
+            token.column = column_number
+            for char in token.value:
+                if char == '\n':
+                    line_number += 1
+                    column_number = 1
+                else:
+                    column_number += 1
+
+    def _try_read_space_token(self):
+        space = self._read_spaces()
+        if space == '':
+            return False
+        start = 0
+        end = 0
+        for end in range(len(space)):
+            char = space[end]
+            if char == '\n':
+                if start != end:
+                    self._tokens.append(Token(space[start:end], TokenType.Space, self._row))
+                self._tokens.append(Token('\n', TokenType.Space, self._row))
+                self._row += 1
+                start = end + 1
+        if space[-1] != '\n':
+            self._tokens.append(Token(space[start:end + 1], TokenType.Space, self._row))
+
     def _try_read_token_word(self):
+        if self._index >= len(self._code):
+            return False
         char = self._code[self._index]
         if not (char.isalnum() or char == '_'):
             return False
         current_token = self._read_word()
-        spaces = self._read_spaces()
         if current_token in self.KEYWORDS:
-            self._tokens.append(Token(current_token, TokenType.Keyword, spaces))
+            self._tokens.append(Token(current_token, TokenType.Keyword, self._row))
         else:
-            self._tokens.append(Token(current_token, TokenType.Identifier, spaces))
+            self._tokens.append(Token(current_token, TokenType.Identifier, self._row))
         return True
 
     def _try_read_string_constant(self):
+        if self._index >= len(self._code):
+            return False
         char = self._code[self._index]
         if char != '\"' and char != '\'':
             return False
         current_token = self._read_string_constant()
-        spaces = self._read_spaces()
-        self._tokens.append(Token(current_token, TokenType.StringConstant, spaces))
+        self._tokens.append(Token(current_token, TokenType.StringConstant, self._row))
         return True
 
     def _try_read_operator(self):
@@ -63,21 +98,21 @@ class Tokenizer:
         op2 = self._code[index:index + 2] if index + 1 < len(self._code) else None
         if op2 in self.OPERATIONS:
             self._index += 2
-            spaces = self._read_spaces()
-            self._tokens.append(Token(op2, TokenType.Operation, spaces))
+            self._tokens.append(Token(op2, TokenType.Operation, self._row))
         elif op1 in self.OPERATIONS:
             self._index += 1
-            spaces = self._read_spaces()
-            self._tokens.append(Token(op1, TokenType.Operation, spaces))
+            self._tokens.append(Token(op1, TokenType.Operation, self._row))
         else:
             return False
         return True
 
     def _read_symbol(self):
+        if self._index >= len(self._code):
+            return False
         self._index += 1
         char = self._code[self._index - 1]
         self._tokens.append(
-            Token(char, TokenType.Symbol, self._read_spaces()))
+            Token(char, TokenType.Symbol, self._row))
         return True
 
     def _read_spaces(self):
@@ -132,7 +167,7 @@ class Tokenizer:
                 break
         start = self._index
         self._index = index
-        self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._read_spaces()))
+        self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))
         return True
 
     def _read_multiline_comment(self):
@@ -140,15 +175,16 @@ class Tokenizer:
             if index + 1 < len(self._code) and self._code[index:index + 2] == '*/':
                 start = self._index
                 self._index = index + 2
-                self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._read_spaces()))
+                self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))
                 return True
         else:
             comment = self._read_word()
-            self._tokens.append(Token(comment, TokenType.Comment, self._read_spaces()))
+            self._tokens.append(Token(comment, TokenType.Comment, self._row))
             return True
 
     def _try_read_number(self):
-        if not self._code[self._index].isdigit() and not self._code[self._index] == '.':
+        if self._index >= len(self._code) or not self._code[self._index].isdigit() and not self._code[
+                                                                                               self._index] == '.':
             return False
         fraction_literals = 'fFdDmM'
         integer_literals = 'ulUL'
@@ -185,7 +221,7 @@ class Tokenizer:
                 return True
 
     def _get_number_token(self, number):
-        self._tokens.append(Token(number, TokenType.NumberConstant, self._read_spaces()))
+        self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
                 'catch', 'char', 'checked', 'class', 'const', 'continue',
