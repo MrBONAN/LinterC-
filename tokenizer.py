@@ -2,7 +2,7 @@ from enum import Enum
 
 TokenType = Enum('TokenType', ['Symbol', 'Keyword', 'NumberConstant',
                                'StringConstant', 'Character', 'Identifier',
-                               'Operation'])
+                               'Operation', 'Comment', 'Space'])
 
 
 class Token:
@@ -25,6 +25,7 @@ class Tokenizer:
         self._read_spaces()
         while self._index < len(self._code):
             for i in [self._try_read_token_word,
+                      self._try_read_comment,
                       self._try_read_string_constant,
                       self._try_read_operator,
                       self._read_symbol]:
@@ -86,15 +87,15 @@ class Tokenizer:
         return spaces
 
     def _read_word(self):
-        current_token = ''
+        word = ''
         start = self._index
         for char in self._code[start:]:
             if char.isalnum() or char == '_':
-                current_token += char
+                word += char
                 self._index += 1
             else:
                 break
-        return current_token
+        return word
 
     def _read_string_constant(self):
         string = ''
@@ -113,6 +114,37 @@ class Tokenizer:
             return self._read_word()
         self._index += 1
         return string
+
+    def _try_read_comment(self):
+        if self._index + 1 >= len(self._code) or self._code[self._index] != '/' or self._code[
+            self._index + 1] not in '/*':
+            return
+        self._index += 2
+        if self._code[self._index - 1] == '*':
+            return self._read_multiline_comment()
+        return self._read_oneline_comment()
+
+    def _read_oneline_comment(self):
+        index = self._index
+        for index in range(self._index, len(self._code)):
+            if self._code[index] == '\n':
+                break
+        start = self._index
+        self._index = index
+        self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._read_spaces()))
+        return True
+
+    def _read_multiline_comment(self):
+        for index in range(self._index, len(self._code)):
+            if index + 1 < len(self._code) and self._code[index:index + 2] == '*/':
+                start = self._index
+                self._index = index + 2
+                self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._read_spaces()))
+                return True
+        else:
+            comment = self._read_word()
+            self._tokens.append(Token(comment, TokenType.Comment, self._read_spaces()))
+            return True
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
                 'catch', 'char', 'checked', 'class', 'const', 'continue',

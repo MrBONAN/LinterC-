@@ -42,6 +42,7 @@ class MyTestCase(unittest.TestCase):
                   '++', '--', '+=', '-=', '*=', '/=', '%=',
                   '&&', '^', '||', '==', '!=', '>', '<', '>=', '<=',
                   '<<', '>>', '&', '|', '^', '~', '?']
+
     def test_connected_operations(self):
         result = self.get_tokens(''.join(self.OPERATIONS))
         self.assertEqual(len(result), len(self.OPERATIONS))
@@ -68,10 +69,53 @@ with_newline_character"'''
         self.assertEqual(1, len(result))
         self.assertEqual('\n', result[0].value[11])
 
-    def test_have_not_closing_quotation_mark(self):
-        string = """'very big string without closing quotation mark"""
+    def test_without_closing_quotation_mark(self):
+        string = "'very big string without closing quotation mark"
         result = self.get_tokens(string)
         self.assertEqual(7, len(result))
+
+    def test_oneline_comment(self):
+        code = """// this code do nothing
+var v = 0;"""
+        result = self.get_tokens(code)
+        self.assertEqual(6, len(result))
+        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
+        self.assertEqual(result[0].value, ' this code do nothing')
+
+    def test_multiline_comment_1(self):
+        code = """/*- WOW, this is multiline comment?
+- Yes, it is!*/
+var v = 0;"""
+        result = self.get_tokens(code)
+        self.assertEqual(6, len(result))
+        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
+        self.assertEqual(result[0].value, """- WOW, this is multiline comment?
+- Yes, it is!""")
+
+    def test_multiline_comment_2(self):
+        code = "var message = 2 * /*WOW*/ + 5;"
+        result = self.get_tokens(code)
+        self.assertEqual(9, len(result))
+        self.assertEqual(result[5].token_type, tokenizer.TokenType.Comment)
+        self.assertEqual(result[5].value, 'WOW')
+
+    def test_multiline_comment_3_empty_comment(self):
+        code = "var message = 2 * /**/ + 5;"
+        result = self.get_tokens(code)
+        self.assertEqual(9, len(result))
+        self.assertEqual(result[5].token_type, tokenizer.TokenType.Comment)
+        self.assertEqual(result[5].value, '')
+
+    def test_multiline_comment_without_closing_symbols(self):
+        code = "var message = 2 * /*WOW + 5;"
+        result = self.get_tokens(code)
+        self.assertEqual(9, len(result))
+        self.assertEqual(result[5].token_type, tokenizer.TokenType.Comment)
+        self.assertEqual(result[5].value, 'WOW')
+
+    def test_numbers(self):
+        code = """var message = 2 * /*WOW*/ + 5;"""
+        result = self.get_tokens(code)
 
     def test_if_statement(self):
         if_statement = """
@@ -81,7 +125,6 @@ with_newline_character"'''
         """
 
         result = self.get_tokens(if_statement)
-
 
     def test_while_statement(self):
         while_statement = """
