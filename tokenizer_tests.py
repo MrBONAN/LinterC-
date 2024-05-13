@@ -113,9 +113,61 @@ var v = 0;"""
         self.assertEqual(result[5].token_type, tokenizer.TokenType.Comment)
         self.assertEqual(result[5].value, 'WOW')
 
-    def test_numbers(self):
-        code = """var message = 2 * /*WOW*/ + 5;"""
+    def test_integer_numbers_1(self):
+        code = """var n = 5;"""
         result = self.get_tokens(code)
+        self.assertEqual(5, len(result))
+        self.assertEqual('5', result[3].value)
+    def test_integer_numbers_2_literals(self):
+        literals = "u U l L UL Ul uL ul LU Lu lU lu".split()
+        numbers = " ".join(["5" + lit for lit in literals])
+        result = self.get_tokens(numbers)
+        self.assertEqual(len(literals), len(result))
+        for expected, actual in zip(literals, result):
+            self.assertEqual(tokenizer.TokenType.NumberConstant, actual.token_type)
+            self.assertEqual("5" + expected, actual.value)
+
+    def test_double_numbers_1(self):
+        code = """var n = 5.;"""
+        result = self.get_tokens(code)
+        self.assertEqual(5, len(result))
+        self.assertEqual('5.', result[3].value)
+
+    def test_double_numbers_2(self):
+        code = """var n = 5.5242;"""
+        result = self.get_tokens(code)
+        self.assertEqual(5, len(result))
+        self.assertEqual('5.5242', result[3].value)
+
+    def test_double_numbers_3_begin_with_dot(self):
+        code = """var n = .42;"""
+        result = self.get_tokens(code)
+        self.assertEqual(5, len(result))
+        self.assertEqual('.42', result[3].value)
+
+    def test_double_numbers_4_with_literal(self):
+        literals = "f F d D m M".split()
+        numbers = " ".join(["4.2" + lit for lit in literals])
+        result = self.get_tokens(numbers)
+        self.assertEqual(len(literals), len(result))
+        for expected, actual in zip(literals, result):
+            self.assertEqual(tokenizer.TokenType.NumberConstant, actual.token_type)
+            self.assertEqual("4.2" + expected, actual.value)
+
+    def test_all_numbers_type(self):
+        code = """var n=.42+5D+5.f+1.0F+3U+2l;"""
+        result = self.get_tokens(code)
+        self.assertEqual(15, len(result))
+        expected = '.42 5D 5.f 1.0F 3U 2l'.split()
+        for i in range(3, 14, 2):
+            self.assertEqual(tokenizer.TokenType.NumberConstant, result[i].token_type)
+            self.assertEqual(expected[i // 2 - 1], result[i].value)
+
+    def test_check_negative_numbers(self):
+        code = """var n = -.42f;"""
+        result = self.get_tokens(code)
+        self.assertEqual(6, len(result))
+        self.assertEqual('.42f', result[4].value)
 
     def test_if_statement(self):
         if_statement = """

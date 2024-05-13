@@ -24,7 +24,8 @@ class Tokenizer:
         self._tokens = []
         self._read_spaces()
         while self._index < len(self._code):
-            for i in [self._try_read_token_word,
+            for i in [self._try_read_number,
+                      self._try_read_token_word,
                       self._try_read_comment,
                       self._try_read_string_constant,
                       self._try_read_operator,
@@ -145,6 +146,46 @@ class Tokenizer:
             comment = self._read_word()
             self._tokens.append(Token(comment, TokenType.Comment, self._read_spaces()))
             return True
+
+    def _try_read_number(self):
+        if not self._code[self._index].isdigit() and not self._code[self._index] == '.':
+            return False
+        fraction_literals = 'fFdDmM'
+        integer_literals = 'ulUL'
+        was_dot = False
+        number = ''
+        for index in range(self._index, len(self._code)):
+            char = self._code[index]
+            if char.isdigit():
+                number += char
+            elif char == '.':
+                if was_dot:
+                    self._index = index + 1
+                    self._get_number_token(number)
+                    return True
+                else:
+                    was_dot = True
+                    number += char
+            # если не цифра и не точка, но, возможно, литерал
+            else:
+                self._index = index
+                if char in fraction_literals:
+                    number += char
+                    self._index += 1
+                elif char in integer_literals:
+                    number += char
+                    self._index += 1
+                    # если есть вторая часть литерала, такая как Lu
+                    if index + 1 < len(self._code) and \
+                            self._code[index + 1].lower() != char.lower and \
+                            self._code[index + 1] in integer_literals:
+                        number += self._code[index + 1]
+                        self._index += 1
+                self._get_number_token(number)
+                return True
+
+    def _get_number_token(self, number):
+        self._tokens.append(Token(number, TokenType.NumberConstant, self._read_spaces()))
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
                 'catch', 'char', 'checked', 'class', 'const', 'continue',
