@@ -152,7 +152,7 @@ class Tokenizer:
     def _try_read_comment(self):
         if self._index + 1 >= len(self._code) or self._code[self._index] != '/' or self._code[
             self._index + 1] not in '/*':
-            return
+            return False
         self._index += 2
         if self._code[self._index - 1] == '*':
             return self._read_multiline_comment()
@@ -172,12 +172,12 @@ class Tokenizer:
     def _read_multiline_comment(self):
         for index in range(self._index, len(self._code)):
             if index + 1 < len(self._code) and self._code[index:index + 2] == '*/':
-                if self._code[index] == '\n':
-                    self._row += 1
                 start = self._index
                 self._index = index + 2
                 self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))
                 return True
+            elif self._code[index] == '\n':
+                self._row += 1
         else:
             comment = self._read_word()
             self._tokens.append(Token(comment, TokenType.Comment, self._row))
