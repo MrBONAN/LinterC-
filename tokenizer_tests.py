@@ -107,8 +107,8 @@ with_newline_character"'''
 var v = 0;"""
         result = self.get_tokens(code)
         self.assertEqual(10, len(result))
-        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[0].value, ' this code do nothing')
+        self.assertEqual(tokenizer.TokenType.Comment, result[0].token_type)
+        self.assertEqual(' this code do nothing', result[0].value)
 
     def test_multiline_comment_1(self):
         code = """/*- WOW, is this multiline comment?
@@ -116,30 +116,30 @@ var v = 0;"""
 var v = 0;"""
         result = self.get_tokens(code)
         self.assertEqual(10, len(result))
-        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[0].value, """- WOW, is this multiline comment?
-- Yes, it is!""")
+        self.assertEqual(tokenizer.TokenType.Comment, result[0].token_type)
+        self.assertEqual("""- WOW, is this multiline comment?
+- Yes, it is!""", result[0].value)
 
     def test_multiline_comment_2(self):
         code = "var message = 2 * /*WOW*/ + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, 'WOW')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('WOW', result[10].value)
 
     def test_multiline_comment_3_empty_comment(self):
         code = "var message = 2 * /**/ + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, '')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('', result[10].value)
 
     def test_multiline_comment_without_closing_symbols(self):
         code = "var message = 2 * /*WOW + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, 'WOW')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('WOW', result[10].value)
 
     def test_integer_numbers_1(self):
         code = """var n = 5;"""
