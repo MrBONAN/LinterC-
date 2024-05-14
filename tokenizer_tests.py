@@ -117,7 +117,7 @@ var v = 0;"""
         result = self.get_tokens(code)
         self.assertEqual(10, len(result))
         self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[0].value, """- WOW, this is multiline comment?
+        self.assertEqual(result[0].value, """- WOW, is this multiline comment?
 - Yes, it is!""")
 
     def test_multiline_comment_2(self):

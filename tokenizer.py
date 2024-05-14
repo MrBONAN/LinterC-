@@ -1,4 +1,6 @@
+import re
 from enum import Enum
+from re import search
 
 TokenType = Enum('TokenType', ['Symbol', 'Keyword', 'NumberConstant',
                                'StringConstant', 'Character', 'Identifier',
@@ -184,45 +186,17 @@ class Tokenizer:
             return True
 
     def _try_read_number(self):
-        if self._index >= len(self._code) or not self._code[self._index].isdigit() and not self._code[
-                                                                                               self._index] == '.':
+        regx_real_numbers = r'((([0-9]*\.[0-9]+)|([0-9]+\.[0-9]*)|([0-9]+))[fFdDmM]{0})'
+        regx_integer_numbers = r'([0-9]+((UL)|(Ul)|(uL)|(ul)|(LU)|(Lu)|(lU)|(lu)|[uUlL]{0}))'
+        regx_numbers = rf'^({regx_real_numbers.format("")}|{regx_integer_numbers.format("")}' + \
+                       rf'|{regx_real_numbers.format("?")}|{regx_integer_numbers.format("?")})'
+        result = search(regx_numbers, self._code[self._index:])
+        if not result:
             return False
-        if self._code[self._index] == '.' and (
-                self._index + 1 >= len(self._code) or not self._code[self._index].isdigit()):
-            return False
-        fraction_literals = 'fFdDmM'
-        integer_literals = 'ulUL'
-        was_dot = False
-        number = ''
-        for index in range(self._index, len(self._code)):
-            char = self._code[index]
-            if char.isdigit():
-                number += char
-            elif char == '.':
-                if was_dot:
-                    self._index = index + 1
-                    self._write_number_token(number)
-                    return True
-                else:
-                    was_dot = True
-                    number += char
-            # если не цифра и не точка, но, возможно, литерал
-            else:
-                self._index = index
-                if char in fraction_literals:
-                    number += char
-                    self._index += 1
-                elif char in integer_literals:
-                    number += char
-                    self._index += 1
-                    # если есть вторая часть литерала, такая как Lu
-                    if index + 1 < len(self._code) and \
-                            self._code[index + 1].lower() != char.lower and \
-                            self._code[index + 1] in integer_literals:
-                        number += self._code[index + 1]
-                        self._index += 1
-                self._write_number_token(number)
-                return True
+        number = result.group(0)
+        self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
+        self._index += len(number)
+        return True
 
     def _write_number_token(self, number):
         self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
