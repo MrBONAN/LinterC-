@@ -14,7 +14,7 @@ class MyTestCase(unittest.TestCase):
     def print_tokens(self, tokens):
         for token in tokens:
             if token.token_type is not tokenizer.TokenType.Space:
-                print((f'{token.value} - {token.token_type}'))
+                print(f'{token.value} - {token.token_type}')
 
     def print_lines(self, lines):
         for line in lines:
@@ -28,8 +28,8 @@ class MyTestCase(unittest.TestCase):
         string_constant = '"hello, how are you?"'
         result = self.get_tokens(string_constant)
         self.assertEqual(1, len(result))
-        string_token = result[0]
-        self.assertEqual('hello, how are you?', string_token.value)
+        self.assertEqual(tokenizer.TokenType.StringConstant, result[0].token_type)
+        self.assertEqual('hello, how are you?', result[0].value)
 
     def tests_large_csharp_code(self):
         large_csharp_code = """
@@ -47,14 +47,12 @@ class MyTestCase(unittest.TestCase):
                     }
                 }
                 """
-        # result = self.get_tokens(large_csharp_code)
-        # self.print_tokens(result)
         result = self.get_lines(large_csharp_code)
         self.print_lines(result)
 
     def test_space_tokens(self):
         code = """some_code 
-        two_tabs_or_spaces"""
+        eight_spaces"""
         result = self.get_tokens(code)
         self.assertEqual(5, len(result))
 
@@ -70,7 +68,7 @@ class MyTestCase(unittest.TestCase):
     OPERATIONS = ['=', '+', '-', '*', '/', '%',
                   '++', '--', '+=', '-=', '*=', '/=', '%=',
                   '&&', '^', '||', '==', '!=', '>', '<', '>=', '<=',
-                  '<<', '>>', '&', '|', '^', '~', '?']
+                  '<<', '>>', '&', '|', '^', '~', '?', '=>']
 
     def test_connected_operations(self):
         result = self.get_tokens(''.join(self.OPERATIONS))
@@ -109,39 +107,39 @@ with_newline_character"'''
 var v = 0;"""
         result = self.get_tokens(code)
         self.assertEqual(10, len(result))
-        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[0].value, ' this code do nothing')
+        self.assertEqual(tokenizer.TokenType.Comment, result[0].token_type)
+        self.assertEqual(' this code do nothing', result[0].value)
 
     def test_multiline_comment_1(self):
-        code = """/*- WOW, this is multiline comment?
+        code = """/*- WOW, is this multiline comment?
 - Yes, it is!*/
 var v = 0;"""
         result = self.get_tokens(code)
         self.assertEqual(10, len(result))
-        self.assertEqual(result[0].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[0].value, """- WOW, this is multiline comment?
-- Yes, it is!""")
+        self.assertEqual(tokenizer.TokenType.Comment, result[0].token_type)
+        self.assertEqual("""- WOW, is this multiline comment?
+- Yes, it is!""", result[0].value)
 
     def test_multiline_comment_2(self):
         code = "var message = 2 * /*WOW*/ + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, 'WOW')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('WOW', result[10].value)
 
     def test_multiline_comment_3_empty_comment(self):
         code = "var message = 2 * /**/ + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, '')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('', result[10].value)
 
     def test_multiline_comment_without_closing_symbols(self):
         code = "var message = 2 * /*WOW + 5;"
         result = self.get_tokens(code)
         self.assertEqual(16, len(result))
-        self.assertEqual(result[10].token_type, tokenizer.TokenType.Comment)
-        self.assertEqual(result[10].value, 'WOW')
+        self.assertEqual(tokenizer.TokenType.Comment, result[10].token_type)
+        self.assertEqual('WOW', result[10].value)
 
     def test_integer_numbers_1(self):
         code = """var n = 5;"""

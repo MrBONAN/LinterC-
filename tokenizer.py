@@ -1,4 +1,6 @@
+import re
 from enum import Enum
+from re import search
 
 TokenType = Enum('TokenType', ['Symbol', 'Keyword', 'NumberConstant',
                                'StringConstant', 'Character', 'Identifier',
@@ -150,78 +152,49 @@ class Tokenizer:
         return string
 
     def _try_read_comment(self):
-        if self._index + 1 >= len(self._code) or self._code[self._index] != '/' or self._code[
-            self._index + 1] not in '/*':
-            return
-        self._index += 2
-        if self._code[self._index - 1] == '*':
-            return self._read_multiline_comment()
-        return self._read_oneline_comment()
+        return self._read_oneline_comment() or self._read_multiline_comment()
 
     def _read_oneline_comment(self):
-        index = self._index
-        for index in range(self._index, len(self._code)):
-            if self._code[index] == '\n':
-                self._row += 1
-                break
-        start = self._index
-        self._index = index
-        self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))
+        regx_oneline_comment = r'(?<=^\/\/).*?(?=\n|$)'
+        result = search(regx_oneline_comment, self._code[self._index:])
+        if not result:
+            return False
+        number = result.group(0)
+        self._tokens.append(Token(number, TokenType.Comment, self._row))
+        self._index += len(number) + 2
         return True
 
     def _read_multiline_comment(self):
-        for index in range(self._index, len(self._code)):
-            if index + 1 < len(self._code) and self._code[index:index + 2] == '*/':
-                if self._code[index] == '\n':
-                    self._row += 1
-                start = self._index
-                self._index = index + 2
-                self._tokens.append(Token(self._code[start:index], TokenType.Comment, self._row))
-                return True
-        else:
-            comment = self._read_word()
-            self._tokens.append(Token(comment, TokenType.Comment, self._row))
-            return True
+        regx_multiline_comment = r'(?<=^\/\*)([\w\W]*?)(?=\*\/)'
+        regx_without_closing_symbols = r'(?<=^\/\*)(.*?)(?= )'
+        result = search(regx_multiline_comment, self._code[self._index:])
+        complete_multiline_comment = True
+        if not result:
+            result = search(regx_without_closing_symbols, self._code[self._index:])
+            complete_multiline_comment = False
+            if not result:
+                return False
+        number = result.group(0)
+        self._tokens.append(Token(number, TokenType.Comment, self._row))
+        self._index += len(number) + 2
+        if complete_multiline_comment:
+            self._index += 2
+        return True
 
     def _try_read_number(self):
-        if self._index >= len(self._code) or not self._code[self._index].isdigit() and not self._code[
-                                                                                               self._index] == '.':
+        regx_real_numbers = r'((([0-9]*\.[0-9]+)|([0-9]+\.[0-9]*)|([0-9]+))[fFdDmM]{0})'
+        regx_integer_numbers = r'([0-9]+((UL)|(Ul)|(uL)|(ul)|(LU)|(Lu)|(lU)|(lu)|[uUlL]{0}))'
+        regx_numbers = rf'^({regx_real_numbers.format("")}|{regx_integer_numbers.format("")}' + \
+                       rf'|{regx_real_numbers.format("?")}|{regx_integer_numbers.format("?")})'
+        result = search(regx_numbers, self._code[self._index:])
+        if not result:
             return False
-        fraction_literals = 'fFdDmM'
-        integer_literals = 'ulUL'
-        was_dot = False
-        number = ''
-        for index in range(self._index, len(self._code)):
-            char = self._code[index]
-            if char.isdigit():
-                number += char
-            elif char == '.':
-                if was_dot:
-                    self._index = index + 1
-                    self._get_number_token(number)
-                    return True
-                else:
-                    was_dot = True
-                    number += char
-            # если не цифра и не точка, но, возможно, литерал
-            else:
-                self._index = index
-                if char in fraction_literals:
-                    number += char
-                    self._index += 1
-                elif char in integer_literals:
-                    number += char
-                    self._index += 1
-                    # если есть вторая часть литерала, такая как Lu
-                    if index + 1 < len(self._code) and \
-                            self._code[index + 1].lower() != char.lower and \
-                            self._code[index + 1] in integer_literals:
-                        number += self._code[index + 1]
-                        self._index += 1
-                self._get_number_token(number)
-                return True
+        number = result.group(0)
+        self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
+        self._index += len(number)
+        return True
 
-    def _get_number_token(self, number):
+    def _write_number_token(self, number):
         self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
@@ -241,4 +214,4 @@ class Tokenizer:
     OPERATIONS = ['+', '-', '*', '/', '%', '=',
                   '++', '--', '+=', '-=', '*=', '/=', '%=',
                   '&&', '^', '||', '==', '!=', '>', '<', '<=', '>=',
-                  '<<', '>>', '&', '|', '^', '~', '?']
+                  '<<', '>>', '&', '|', '^', '~', '?', '=>']
