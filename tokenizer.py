@@ -187,6 +187,9 @@ class Tokenizer:
         if self._index >= len(self._code) or not self._code[self._index].isdigit() and not self._code[
                                                                                                self._index] == '.':
             return False
+        if self._code[self._index] == '.' and (
+                self._index + 1 >= len(self._code) or not self._code[self._index].isdigit()):
+            return False
         fraction_literals = 'fFdDmM'
         integer_literals = 'ulUL'
         was_dot = False
@@ -198,7 +201,7 @@ class Tokenizer:
             elif char == '.':
                 if was_dot:
                     self._index = index + 1
-                    self._get_number_token(number)
+                    self._write_number_token(number)
                     return True
                 else:
                     was_dot = True
@@ -218,10 +221,10 @@ class Tokenizer:
                             self._code[index + 1] in integer_literals:
                         number += self._code[index + 1]
                         self._index += 1
-                self._get_number_token(number)
+                self._write_number_token(number)
                 return True
 
-    def _get_number_token(self, number):
+    def _write_number_token(self, number):
         self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
@@ -241,4 +244,4 @@ class Tokenizer:
     OPERATIONS = ['+', '-', '*', '/', '%', '=',
                   '++', '--', '+=', '-=', '*=', '/=', '%=',
                   '&&', '^', '||', '==', '!=', '>', '<', '<=', '>=',
-                  '<<', '>>', '&', '|', '^', '~', '?']
+                  '<<', '>>', '&', '|', '^', '~', '?', '=>']

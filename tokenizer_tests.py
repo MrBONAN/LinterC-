@@ -70,7 +70,7 @@ class MyTestCase(unittest.TestCase):
     OPERATIONS = ['=', '+', '-', '*', '/', '%',
                   '++', '--', '+=', '-=', '*=', '/=', '%=',
                   '&&', '^', '||', '==', '!=', '>', '<', '>=', '<=',
-                  '<<', '>>', '&', '|', '^', '~', '?']
+                  '<<', '>>', '&', '|', '^', '~', '?', '=>']
 
     def test_connected_operations(self):
         result = self.get_tokens(''.join(self.OPERATIONS))
