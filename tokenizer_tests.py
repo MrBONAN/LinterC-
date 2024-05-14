@@ -14,7 +14,7 @@ class MyTestCase(unittest.TestCase):
     def print_tokens(self, tokens):
         for token in tokens:
             if token.token_type is not tokenizer.TokenType.Space:
-                print((f'{token.value} - {token.token_type}'))
+                print(f'{token.value} - {token.token_type}')
 
     def print_lines(self, lines):
         for line in lines:
@@ -28,8 +28,8 @@ class MyTestCase(unittest.TestCase):
         string_constant = '"hello, how are you?"'
         result = self.get_tokens(string_constant)
         self.assertEqual(1, len(result))
-        string_token = result[0]
-        self.assertEqual('hello, how are you?', string_token.value)
+        self.assertEqual(tokenizer.TokenType.StringConstant, result[0].token_type)
+        self.assertEqual('hello, how are you?', result[0].value)
 
     def tests_large_csharp_code(self):
         large_csharp_code = """
@@ -47,14 +47,12 @@ class MyTestCase(unittest.TestCase):
                     }
                 }
                 """
-        # result = self.get_tokens(large_csharp_code)
-        # self.print_tokens(result)
         result = self.get_lines(large_csharp_code)
         self.print_lines(result)
 
     def test_space_tokens(self):
         code = """some_code 
-        two_tabs_or_spaces"""
+        eight_spaces"""
         result = self.get_tokens(code)
         self.assertEqual(5, len(result))
 
@@ -113,7 +111,7 @@ var v = 0;"""
         self.assertEqual(result[0].value, ' this code do nothing')
 
     def test_multiline_comment_1(self):
-        code = """/*- WOW, this is multiline comment?
+        code = """/*- WOW, is this multiline comment?
 - Yes, it is!*/
 var v = 0;"""
         result = self.get_tokens(code)
