@@ -11,4 +11,6 @@ if __name__ == '__main__':
     tokenizer = Tokenizer(code)
 
     lines = tokenizer.get_lines()
-    print(stylecheck.check(lines, 'default.style'))
+    result = stylecheck.check(lines, 'default.style')
+    for line in result:
+        print(line)

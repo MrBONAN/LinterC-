@@ -1,6 +1,5 @@
 {
-  "indent_style": "spaces",
-  "indent_size": 2,
+  "indent_style_and_size": ["spaces", 4],
   "max_line_length": 100,
   "newline_before_return": true,
   "require_semicolons": true,
@@ -15,7 +14,6 @@
   "space_before_colon": false,
   "space_around_operators": true,
   "remove_trailing_whitespace": true,
-  "remove_trailing_commas": true,
   "trim_whitespace": true
 }
 
