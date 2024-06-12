@@ -199,9 +199,6 @@ class Tokenizer:
         self._index += len(number)
         return True
 
-    def _write_number_token(self, number):
-        self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
-
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
                 'catch', 'char', 'checked', 'class', 'const', 'continue',
                 'decimal', 'default', 'delegate', 'do', 'double', 'else',
