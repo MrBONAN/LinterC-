@@ -1,4 +1,5 @@
-import re
+""" Модуль для токенизации и разбора исходного кода """
+
 from enum import Enum
 from re import search
 
@@ -23,7 +24,10 @@ class Tokenizer:
         self._row = 1
 
     def get_tokens(self):
+        """Получение кода в виде токенов"""
+        self._index = 0
         self._tokens = []
+        self._row = 1
         while self._index < len(self._code):
             for i in [self._try_read_space_token,
                       self._try_read_number,
@@ -37,6 +41,7 @@ class Tokenizer:
         return self._tokens
 
     def get_lines(self):
+        """Группировка токенов по строкам как в исходном коде"""
         tokens = self.get_tokens()
         prev_line = tokens[0].row
         lines = [[]]
@@ -193,9 +198,6 @@ class Tokenizer:
         self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
         self._index += len(number)
         return True
-
-    def _write_number_token(self, number):
-        self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
 
     KEYWORDS = ['abstract', 'as', 'base', 'bool', 'break', 'byte', 'case',
                 'catch', 'char', 'checked', 'class', 'const', 'continue',
