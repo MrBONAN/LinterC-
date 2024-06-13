@@ -21,6 +21,7 @@ namespace StylisticExample
         {
             int num1 = 10;
             int num2 = 20;
+            var a = 0;
 
             if (num1 > num2)
                 Console.WriteLine("num1 больше num2.");
@@ -34,19 +35,6 @@ namespace StylisticExample
             for (int i = 0; i < 5; i++)
             {
                 Console.WriteLine($"Итерация номер {i}");
-            }
-
-            switch (num1)
-            {
-                case 5:
-                    Console.WriteLine("num1 равно 5");
-                    break;
-                case 10:
-                    Console.WriteLine("num1 равно 10");
-                    break;
-                default:
-                    Console.WriteLine("num1 не равно ни 5, ни 10");
-                    break;
             }
 
             if (a > 0) return;

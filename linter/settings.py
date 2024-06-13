@@ -1,4 +1,5 @@
-import tokenizer
+from . import tokenizer
+
 import re
 
 
@@ -18,6 +19,8 @@ class Settings:
             'tab': '\t'
         }
 
+        statement_words = {"if", "else", "for", "foreach", "while", "do", "lock"}
+
         res = []
         expected_count = 0
         last_delta = 0
@@ -26,7 +29,9 @@ class Settings:
             count = 0
             delta_expected_count = 0
 
-            if lines[i][0].value == '\n': continue
+            if lines[i][0].value == '\n' or lines[i][0].token_type == tokenizer.TokenType.StringConstant: continue
+
+            is_prev_line_closed = True
 
             for t in lines[i]:
                 if t.value == '{':
@@ -34,21 +39,20 @@ class Settings:
                 if t.value == '}':
                     delta_expected_count -= size
 
-            #if last_delta == 0 and any(token.token_type for token in lines[i-1]):
-            #
-            #if delta_expected_count < 0: expected_count += delta_expected_count
+            if last_delta == 0 and any(token.value in statement_words for token in lines[i - 1]) and not any(
+                    token.value == '{' for token in lines[i - 1]) and not any(
+                token.value == '{' for token in lines[i]):
+                is_prev_line_closed = False
+
+            if delta_expected_count < 0: expected_count += delta_expected_count
 
             if lines[i][0].token_type == tokenizer.TokenType.Space: count = lines[i][0].value.count(options[value])
-            if count != expected_count:
+            if count != expected_count + size * (is_prev_line_closed == 0):
                 res.append(
                     f'Line {i + 1}: the number of indents ({value}) per line is different (Yours {count} > {expected_count} in code style)')
-            #TODO: сделать проверку отступов для перенесенных строк и однострочных конструкций
-
             if delta_expected_count > 0: expected_count += delta_expected_count
             last_delta = delta_expected_count
 
-        # if (index - 1 > 0 and tokens[index + 1].value != '}' and options[value]):
-        #     tokens[index]
         return res
 
     def newline_before_return(self, value, lines):
@@ -192,7 +196,7 @@ class Settings:
                     res.append(f"Line {i + 1}: expected space before \':\'")
         return res
 
-    def space_around_operators(self, value, lines):
+    def space_around_operators(self, value, lines): #TODO: пофиксить дженерики
         res = []
         if not value:
             return []
