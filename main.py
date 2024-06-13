@@ -7,7 +7,6 @@ if __name__ == '__main__':
         code = file.read()
 
     stylecheck = Stylecheck()
-    settings = Settings()
     tokenizer = Tokenizer(code)
 
     lines = tokenizer.get_lines()

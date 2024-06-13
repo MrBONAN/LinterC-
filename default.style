@@ -13,7 +13,7 @@
   "space_after_colon": true,
   "space_before_colon": false,
   "space_around_operators": true,
-  "remove_trailing_whitespace": true,
+  "allow_trailing_whitespace": true,
   "trim_whitespace": true
 }
 

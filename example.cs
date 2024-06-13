@@ -8,6 +8,7 @@ namespace StylisticExample
         public static List<string> Calculate(List<string> first, List<string> second)
         {
             var a = DoSomething(first, second);
+
             return new List<string>();
         }
 
@@ -22,9 +23,8 @@ namespace StylisticExample
             int num2 = 20;
 
             if (num1 > num2)
-            {
                 Console.WriteLine("num1 больше num2.");
-            }
+
             else if (num1 < num2)
             {
                 Console.WriteLine("num1 меньше num2.");
@@ -48,6 +48,8 @@ namespace StylisticExample
                     Console.WriteLine("num1 не равно ни 5, ни 10");
                     break;
             }
+
+            if (a > 0) return;
 
             try
             {
