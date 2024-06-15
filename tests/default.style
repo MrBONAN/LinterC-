@@ -1,0 +1,19 @@
+{
+  "indent_style_and_size": ["spaces", 4],
+  "max_line_length": 100,
+  "newline_before_return": true,
+  "require_semicolons": true,
+  "space_after_keywords": true,
+  "camel_case": true,
+  "always_use_braces": true,
+  "newline_after_open_brace": true,
+  "newline_before_close_brace": true,
+  "space_after_comma": true,
+  "space_before_comma": false,
+  "space_after_colon": true,
+  "space_before_colon": false,
+  "space_around_operators": true,
+  "allow_trailing_whitespace": true,
+  "trim_whitespace": true
+}
+

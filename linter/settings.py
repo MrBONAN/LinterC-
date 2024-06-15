@@ -7,7 +7,7 @@ class Settings:
     def max_line_length(self, value, lines):
         res = []
         for i in range(len(lines)):
-            count_sym = sum([len(t.value) for t in lines[i]]) - 1
+            count_sym = sum([len(t.value) for t in lines[i]])
             if count_sym > value:
                 res.append(
                     f'Line {i + 1}: the number of characters in the line has been exceeded ({count_sym} > {value})')
@@ -79,18 +79,17 @@ class Settings:
         res = []
         # Ключевые слова, после которых обычно не идет ;
         block_keywords = {"if", "else", "for", "foreach", "while", "do", "switch", "try", "catch", "finally", "lock",
-                          "using", "namespace", "class", "public", "protected", "private", "static", "case", "default"}
+                          "class", "static", "case", "default"}
 
         for i in range(len(lines)):
             if any(token.value in block_keywords for token in lines[i] if
                    token.token_type == tokenizer.TokenType.Keyword) or len(lines[i]) <= 1 or lines[i][
-                -2].value in {"{", "}", "else", "do", "catch", "finally"} or any(
-                token.token_type == tokenizer.TokenType.Comment for token in lines[i]) or all(
-                t.token_type == tokenizer.TokenType.Space for t in lines[i]) or lines[i][-1].token_type != '\n':
+                -2].value in ["{", "}", "else", "do", "catch", "finally"] or any(
+                token.token_type == tokenizer.TokenType.Comment for token in lines[i]) or lines[i][
+                -2].token_type == tokenizer.TokenType.Space:
                 continue
 
             if lines[i][-2].value != ';':
-                print([t.value for t in lines[i]])
                 res.append(f'Line {i + 1}: expected ;')
 
         return res
@@ -99,7 +98,7 @@ class Settings:
         res = []
         for i in range(len(lines)):
             for j in range(len(lines[i]) - 1):
-                if lines[i][j + 1].token_type == tokenizer.TokenType.Symbol or lines[i][j + 1].value in ['>', '>>']:
+                if lines[i][j + 1].token_type != tokenizer.TokenType.Symbol or lines[i][j + 1].value in ['>', '>>', '[', ']', ';']:
                     continue
                 if lines[i][j].token_type == tokenizer.TokenType.Keyword and (
                         (lines[i][j + 1].token_type == tokenizer.TokenType.Space) != value):
@@ -196,16 +195,27 @@ class Settings:
                     res.append(f"Line {i + 1}: expected space before \':\'")
         return res
 
-    def space_around_operators(self, value, lines): #TODO: пофиксить дженерики
+    def space_around_operators(self, value, lines):
         res = []
         if not value:
             return []
+
         for i in range(len(lines)):
+            close_generic_indexes = []
+            values = [token.value for token in lines[i]]
             for j in range(1, len(lines[i]) - 1):
+                if (lines[i][j - 1].token_type in [tokenizer.TokenType.Identifier, tokenizer.TokenType.Keyword] and
+                        lines[i][j + 1].token_type in [tokenizer.TokenType.Identifier, tokenizer.TokenType.Keyword] and
+                        values[j] == '<'):
+                    close_generic_index = values[j:].index('>')
+                    if close_generic_index != -1 and values[j + 1:j + close_generic_index].count('<') == 0:
+                        close_generic_indexes.append(close_generic_index + j)
+                        continue
+
                 if (lines[i][j].token_type == tokenizer.TokenType.Operation and lines[i][j].value not in ['++',
                                                                                                           '--'] and (
-                        lines[i][j - 1].token_type != tokenizer.TokenType.Space or lines[i][
-                    j - 1].token_type != tokenizer.TokenType.Space)):
+                            lines[i][j - 1].token_type != tokenizer.TokenType.Space or lines[i][
+                        j - 1].token_type != tokenizer.TokenType.Space)) and j not in close_generic_indexes:
                     res.append(f"Line {i + 1}: expected spaces around \'{lines[i][j].value}\'")
         return res
 

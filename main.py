@@ -25,7 +25,7 @@ def main():
     config_file = args.config
     source_file = args.source
 
-    with open('example.cs', encoding='utf-8') as file:
+    with open('tests/example.cs', encoding='utf-8') as file:
         code = file.read()
 
     stylecheck = Stylecheck()

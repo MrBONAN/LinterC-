@@ -8,9 +8,12 @@ class Stylecheck:
         with open(settings_path, 'r', encoding='utf-8') as f:
             properties = json.loads(f.read())
         for property in properties:
-            result.append(f'--- {property} ---')
+            preresult = []
             if type(properties[property]) is list:
-                result.extend(getattr(setting, property)(*properties[property], lines))
+                preresult.extend(getattr(setting, property)(*properties[property], lines))
             else:
-                result.extend(getattr(setting, property)(properties[property], lines))
+                preresult.extend(getattr(setting, property)(properties[property], lines))
+            if len(preresult) > 0:
+                result.append(f'--- {property} ---')
+                result.extend(preresult)
         return result
