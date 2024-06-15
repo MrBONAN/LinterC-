@@ -13,8 +13,8 @@ def parse_args():
         default='default.style', help='style settings file (default: "default.style")')
 
     parser.add_argument(
-        '-s', '--source', type=str,
-        help='the source file for checking the style'
+        '-s', '--source', type=str, default='tests/example.cs',
+        help='the source file for checking the style (default: "tests/example.cs")'
     )
 
     return parser.parse_args()
@@ -25,16 +25,30 @@ def main():
     config_file = args.config
     source_file = args.source
 
-    with open('tests/example.cs', encoding='utf-8') as file:
+    print(f'Your file: "{source_file}"')
+    print(f'Your style: "{config_file}"')
+    print()
+
+    with open(source_file, encoding='utf-8') as file:
         code = file.read()
+
+    print(f'"{source_file}" has been loaded successfully.\n')
 
     stylecheck = Stylecheck()
     tokenizer = Tokenizer(code)
-
     lines = tokenizer.get_lines()
-    result = stylecheck.check(lines, 'default.style')
+    result = stylecheck.check(lines, config_file)
+
     for line in result:
         print(line)
+
+    with open('result.txt', 'w', encoding='utf-8') as file:
+        file.write(f'Your file: "{source_file}"\n')
+        file.write(f'Your style: "{config_file}"\n\n')
+        file.write('\n'.join(result))
+
+    print('\nResult has been recorded into "result.txt"')
+    input("\nPress Enter to quit...")
 
 if __name__ == '__main__':
     main()
