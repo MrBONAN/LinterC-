@@ -41,7 +41,7 @@ class Settings:
 
             if last_delta == 0 and any(token.value in statement_words for token in lines[i - 1]) and not any(
                     token.value == '{' for token in lines[i - 1]) and not any(
-                token.value == '{' for token in lines[i]):
+                token.value == '{' for token in lines[i]) and lines[i - 1][-2].value != ';':
                 is_prev_line_closed = False
 
             if delta_expected_count < 0: expected_count += delta_expected_count
@@ -49,7 +49,7 @@ class Settings:
             if lines[i][0].token_type == tokenizer.TokenType.Space: count = lines[i][0].value.count(options[value])
             if count != expected_count + size * (is_prev_line_closed == 0):
                 res.append(
-                    f'Line {i + 1}: the number of indents ({value}) per line is different (Yours {count} > {expected_count} in code style)')
+                    f'Line {i + 1}: the number of indents ({value}) per line is different (Yours {count} > {expected_count + size * (is_prev_line_closed == 0)} in code style)')
             if delta_expected_count > 0: expected_count += delta_expected_count
             last_delta = delta_expected_count
 
@@ -81,12 +81,16 @@ class Settings:
         block_keywords = {"if", "else", "for", "foreach", "while", "do", "switch", "try", "catch", "finally", "lock",
                           "class", "static", "case", "default"}
 
-        for i in range(len(lines)):
+        for i in range(len(lines) - 1):
             if any(token.value in block_keywords for token in lines[i] if
-                   token.token_type == tokenizer.TokenType.Keyword) or len(lines[i]) <= 1 or lines[i][
-                -2].value in ["{", "}", "else", "do", "catch", "finally"] or any(
-                token.token_type == tokenizer.TokenType.Comment for token in lines[i]) or lines[i][
-                -2].token_type == tokenizer.TokenType.Space:
+                    token.token_type == tokenizer.TokenType.Keyword) or len(lines[i]) <= 1 or lines[i][
+                    -2].value in ["{", "}", "else", "do", "catch", "finally"] or any(
+                    token.token_type == tokenizer.TokenType.Comment for token in lines[i]) or lines[i][
+                    -2].token_type == tokenizer.TokenType.Space:
+                continue
+
+            tokens_without_spaces = [token for token in lines[i + 1] if token.token_type != tokenizer.TokenType.Space]
+            if len(tokens_without_spaces) != 0 and tokens_without_spaces[0].value == '{':
                 continue
 
             if lines[i][-2].value != ';':
@@ -98,7 +102,9 @@ class Settings:
         res = []
         for i in range(len(lines)):
             for j in range(len(lines[i]) - 1):
-                if lines[i][j + 1].token_type != tokenizer.TokenType.Symbol or lines[i][j + 1].value in ['>', '>>', '[', ']', ';']:
+                if lines[i][j + 1].token_type != tokenizer.TokenType.Symbol or lines[i][j + 1].value in ['>', '>>', '[',
+                                                                                                         ']', ';', ',',
+                                                                                                         '.', ')']:
                     continue
                 if lines[i][j].token_type == tokenizer.TokenType.Keyword and (
                         (lines[i][j + 1].token_type == tokenizer.TokenType.Space) != value):

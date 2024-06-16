@@ -59,10 +59,20 @@ class TestSettings(unittest.TestCase):
         lines = [
             [self.create_token("int", TokenType.Keyword), self.create_token("a", TokenType.Identifier),
              self.create_token("=", TokenType.Operation), self.create_token("5", TokenType.NumberConstant),
-             self.create_token("\n", TokenType.Space)]
+             self.create_token("\n", TokenType.Space)],
+            [self.create_token("if", TokenType.Keyword), self.create_token("(", TokenType.Symbol),
+             self.create_token("true", TokenType.Keyword), self.create_token(")", TokenType.Symbol),
+             self.create_token("\n", TokenType.Space)],
+            [self.create_token("{", TokenType.Symbol),
+             self.create_token("\n", TokenType.Space)],
+            [self.create_token("}", TokenType.Symbol),
+             self.create_token("\n", TokenType.Space)],
         ]
         result = self.settings.require_semicolons(True, lines)
         self.assertEqual(result, ["Line 1: expected ;"])
+
+        result = self.settings.require_semicolons(False, lines)
+        self.assertEqual(result, [])
 
     def test_space_after_keywords(self):
         lines = [
@@ -89,6 +99,9 @@ class TestSettings(unittest.TestCase):
         result = self.settings.camel_case(True, lines)
         self.assertEqual(result, ["Line 1: expected camelCase in 'snake_case'"])
 
+        result = self.settings.camel_case(False, lines)
+        self.assertEqual(result, [])
+
     def test_always_use_braces(self):
         lines = [
             [self.create_token("if", TokenType.Keyword), self.create_token("(", TokenType.Symbol),
@@ -98,6 +111,9 @@ class TestSettings(unittest.TestCase):
         result = self.settings.always_use_braces(True, lines)
         self.assertEqual(result, ["Line 1: expected '{'"])
 
+        result = self.settings.always_use_braces(False, lines)
+        self.assertEqual(result, [])
+
     def test_newline_after_open_brace(self):
         lines = [
             [self.create_token("{", TokenType.Symbol), self.create_token("return", TokenType.Keyword),
@@ -105,6 +121,9 @@ class TestSettings(unittest.TestCase):
         ]
         result = self.settings.newline_after_open_brace(True, lines)
         self.assertEqual(result, ["Line 1: expected newline before '{'"])
+
+        result = self.settings.newline_after_open_brace(False, lines)
+        self.assertEqual(result, [])
 
     def test_newline_before_close_brace(self):
         lines = [
@@ -114,6 +133,9 @@ class TestSettings(unittest.TestCase):
         result = self.settings.newline_before_close_brace(True, lines)
         self.assertEqual(result, ["Line 1: expected newline before '}'"])
 
+        result = self.settings.newline_before_close_brace(False, lines)
+        self.assertEqual(result, [])
+
     def test_space_after_comma(self):
         lines = [
             [self.create_token("a", TokenType.Identifier), self.create_token(",", TokenType.Symbol),
@@ -121,6 +143,9 @@ class TestSettings(unittest.TestCase):
         ]
         result = self.settings.space_after_comma(True, lines)
         self.assertEqual(result, ["Line 1: expected space after ','"])
+
+        result = self.settings.space_after_comma(False, lines)
+        self.assertEqual(result, [])
 
     def test_space_before_comma(self):
         lines = [
@@ -130,6 +155,9 @@ class TestSettings(unittest.TestCase):
         result = self.settings.space_before_comma(True, lines)
         self.assertEqual(result, ["Line 1: expected space before ','"])
 
+        result = self.settings.space_before_comma(False, lines)
+        self.assertEqual(result, [])
+
     def test_space_after_colon(self):
         lines = [
             [self.create_token("a", TokenType.Identifier), self.create_token(":", TokenType.Symbol),
@@ -137,6 +165,9 @@ class TestSettings(unittest.TestCase):
         ]
         result = self.settings.space_after_colon(True, lines)
         self.assertEqual(result, ["Line 1: expected space after ':'"])
+
+        result = self.settings.space_after_colon(False, lines)
+        self.assertEqual(result, [])
 
     def test_space_before_colon(self):
         lines = [
@@ -146,13 +177,51 @@ class TestSettings(unittest.TestCase):
         result = self.settings.space_before_colon(True, lines)
         self.assertEqual(result, ["Line 1: expected space before ':'"])
 
+        result = self.settings.space_before_colon(False, lines)
+        self.assertEqual(result, [])
+
     def test_space_around_operators(self):
         lines = [
             [self.create_token("a", TokenType.Identifier), self.create_token("+", TokenType.Operation),
-             self.create_token("b", TokenType.Identifier)]
+             self.create_token("b", TokenType.Identifier), self.create_token(";", TokenType.Symbol)],
+            [self.create_token("a", TokenType.Identifier), self.create_token("=", TokenType.Operation),
+             self.create_token("new", TokenType.Keyword), self.create_token(" ", TokenType.Space),
+             self.create_token("List", TokenType.Identifier), self.create_token("<", TokenType.Operation),
+             self.create_token("int", TokenType.Keyword), self.create_token(">", TokenType.Operation),
+             self.create_token("(", TokenType.Symbol), self.create_token(")", TokenType.Symbol),
+             self.create_token(";", TokenType.Symbol)]
         ]
         result = self.settings.space_around_operators(True, lines)
-        self.assertEqual(result, ["Line 1: expected spaces around '+'"])
+        self.assertEqual(result, ["Line 1: expected spaces around '+'", "Line 2: expected spaces around '='"])
+
+        result = self.settings.space_around_operators(False, lines)
+        self.assertEqual(result, [])
+
+    def test_allow_trailing_whitespace(self):
+        lines = [
+            [self.create_token("a", TokenType.Identifier), self.create_token(" ", TokenType.Space),
+             self.create_token("+", TokenType.Operation), self.create_token(" ", TokenType.Space),
+             self.create_token("b", TokenType.Identifier), self.create_token(";", TokenType.Symbol),
+             self.create_token("     ", TokenType.Space), self.create_token('\n', TokenType.Space)]
+        ]
+        result = self.settings.allow_trailing_whitespace(True, lines)
+        self.assertEqual(result, ["Line 1: don't expected spaces in the end of line"])
+
+        result = self.settings.allow_trailing_whitespace(False, lines)
+        self.assertEqual(result, [])
+
+    def test_trim_whitespace(self):
+        lines = [
+            [self.create_token("a", TokenType.Identifier), self.create_token("  ", TokenType.Space),
+             self.create_token("+", TokenType.Operation), self.create_token(" ", TokenType.Space),
+             self.create_token("b", TokenType.Identifier), self.create_token(";", TokenType.Symbol),
+             self.create_token('\n', TokenType.Space)]
+        ]
+        result = self.settings.trim_whitespace(True, lines)
+        self.assertEqual(result, ["Line 1: expected ' '. Actual: '  '"])
+
+        result = self.settings.trim_whitespace(False, lines)
+        self.assertEqual(result, [])
 
     def test_file(self):
         with open('example.cs', encoding='utf-8') as file:
@@ -162,7 +231,7 @@ class TestSettings(unittest.TestCase):
         stylecheck = Stylecheck()
         result = stylecheck.check(lines, 'default.style')
         self.assertEqual(result, ['--- always_use_braces ---', "Line 26: expected '{'", "Line 33: expected '{'",
-                                  "Line 40: expected '{'"])
+                                  "Line 40: expected '{'", '\nTotal errors: 3'])
 
 
 if __name__ == '__main__':
