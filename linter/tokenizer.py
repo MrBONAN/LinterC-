@@ -1,7 +1,7 @@
 """ Модуль для токенизации и разбора исходного кода """
-
+import re
 from enum import Enum
-from re import search
+from collections import defaultdict
 
 TokenType = Enum('TokenType', ['Symbol', 'Keyword', 'NumberConstant',
                                'StringConstant', 'Character', 'Identifier',
@@ -15,184 +15,181 @@ class Token:
         self.row = row
         self.column = column
 
+    def __str__(self):
+        return ', '.join(f'{k}:=\'{v}\''
+                         for k, v in vars(self).items()
+                         if k[0] != '_')
+
 
 class Tokenizer:
-    def __init__(self, code):
-        self._code = code
-        self._index = 0
-        self._tokens = []
-        self._row = 1
+    def __init__(self):
+        self.__compile_regular_expressions()
 
-    def get_tokens(self):
+        # К сожалению, эта красивая конструкция не нужна, так как методы нужно вызывать в определённом порядке :(
+        # self.__read_methods = [getattr(Tokenizer, m)
+        #                       for m in dir(Tokenizer)
+        #                       if re.match(r'^_try_read_', m)] + [getattr(Tokenizer, '_read_symbol')]
+        self.__read_methods = \
+            [self._try_read_space_token,
+             self._try_read_number,
+             self._try_read_token_word,
+             self._try_read_comment,
+             self._try_read_string_constant,
+             self._try_read_operator,
+             self._read_symbol]
+
+    def __compile_regular_expressions(self):
+        """Предварительная компиляция регулярных выражений"""
+        self.__regx_read_spaces = re.compile(r'\s+')
+        self.__regx_read_token_word = re.compile(r'\w+')
+        ops = ("#".join(self.OPERATIONS)
+               .replace('+', r'\+')
+               .replace('*', r'\*')
+               .replace('?', r'\?')
+               .replace('^', r'\^')
+               .replace('/', r'\/')
+               .replace('|', r'\|')
+               .replace('#', r'|'))
+        self.__regx_read_operator = re.compile(ops)
+
+        regx_string_constant = r"""(?:(?:\$@)|(?:@\$)|(?:@)|(?:\$))?(["'])[\W\w]*?(?<!\\)(?:\\\\)*\1"""
+        regx_string_constant_without_end_quote = r"""(?:(?:\$@)|(?:@\$)|(?:@)|(?:\$))?(["'])[\W\w]*?(?=\n|$| )"""
+        self.__regx_read_string_constant = \
+            re.compile(f'(?:{regx_string_constant})|(?:{regx_string_constant_without_end_quote})')
+        self.__regx_read_oneline_comment = re.compile(r'//.*?(?=\n|$)')
+
+        regx_multiline_comment = r'\/\*[\w\W]*?(?<!\\)(?:\\\\)*\*\/'
+        regx_multiline_comment_without_closing_symbols = r'/\*.*?(?=\n|$| )'
+        self.__regx_read_multiline_comment = (
+            re.compile(f'(?:{regx_multiline_comment})|(?:{regx_multiline_comment_without_closing_symbols})'))
+
+        self.__regx_read_real_numbers = re.compile(r'(([0-9]*[.,][0-9]+)|([0-9]+[.,]?))(?:[eE][-+]?[0-9]+)?[fFdDmM]?')
+        self.__regx_read_integer_numbers = re.compile(r'([0-9]+((UL)|(Ul)|(uL)|(ul)|(LU)|(Lu)|(lU)|(lu)|[uUlL]?))')
+
+    def get_tokens(self, code):
         """Получение кода в виде токенов"""
         self._index = 0
         self._tokens = []
         self._row = 1
+        self._code = code
+
         while self._index < len(self._code):
-            for i in [self._try_read_space_token,
-                      self._try_read_number,
-                      self._try_read_token_word,
-                      self._try_read_comment,
-                      self._try_read_string_constant,
-                      self._try_read_operator,
-                      self._read_symbol]:
-                if i():
+            for method in self.__read_methods:
+                if method():
                     break
+        self._calculate_token_positions()
         return self._tokens
 
-    def get_lines(self):
-        """Группировка токенов по строкам как в исходном коде"""
-        tokens = self.get_tokens()
-        prev_line = tokens[0].row
-        lines = [[]]
-        for token in tokens:
-            if token.row == prev_line:
-                lines[-1].append(token)
+    def _calculate_token_positions(self):
+        row, column = 1, 1
+        prev_token = None
+        for token in self._tokens:
+            token.row = row
+            token.column = column
+            if prev_token is not None and \
+                    prev_token.token_type == TokenType.StringConstant and \
+                    prev_token.value == token.value:
+                continue
+            row += token.value.count('\n')
+            if '\n' in token.value:
+                column = len(token.value) - token.value.rfind('\n')
             else:
-                prev_line = token.row
-                lines.append([token])
-        return lines
+                column += len(token.value)
+            prev_token = token
+
+    def get_lines(self, code):
+        """Группировка токенов по строкам как в исходном коде"""
+        lines = defaultdict(list)
+        for token in self.get_tokens(code):
+            lines[token.row].append(token)
+        return [sorted(line[1], key=lambda t: t.column) for line in sorted(lines.items())]
 
     def _try_read_space_token(self):
         space = self._read_spaces()
-        if space == '':
+        if space == None:
             return False
-        start = 0
-        end = 0
-        for end in range(len(space)):
-            char = space[end]
-            if char == '\n':
-                if start != end:
-                    self._tokens.append(Token(space[start:end], TokenType.Space, self._row))
-                self._tokens.append(Token('\n', TokenType.Space, self._row))
-                self._row += 1
-                start = end + 1
-        if space[-1] != '\n':
-            self._tokens.append(Token(space[start:end + 1], TokenType.Space, self._row))
+        spaces = filter(None, space.replace('\n', '#\n#').split('#'))
+        for s in spaces:
+            self._tokens.append(Token(s, TokenType.Space))
+        self._index += len(space)
+        return True
+
+    def _read_spaces(self):
+        spaces = self.__regx_read_spaces.match(self._code, self._index)
+        return spaces.group(0) if spaces else None
 
     def _try_read_token_word(self):
-        if self._index >= len(self._code):
-            return False
         char = self._code[self._index]
         if not (char.isalnum() or char == '_'):
             return False
         current_token = self._read_word()
-        if current_token in self.KEYWORDS:
-            self._tokens.append(Token(current_token, TokenType.Keyword, self._row))
-        else:
-            self._tokens.append(Token(current_token, TokenType.Identifier, self._row))
+        self._tokens.append(Token(current_token,
+                                  TokenType.Keyword if current_token in self.KEYWORDS else TokenType.Identifier))
         return True
+
+    def _read_word(self):
+        word = self.__regx_read_token_word.match(self._code, self._index).group(0)
+        self._index += len(word)
+        return word
 
     def _try_read_string_constant(self):
-        if self._index >= len(self._code):
-            return False
-        char = self._code[self._index]
-        if char != '\"' and char != '\'':
-            return False
         current_token = self._read_string_constant()
-        self._tokens.append(Token(current_token, TokenType.StringConstant, self._row))
+        if current_token is None:
+            return False
+        self._tokens.append(Token(current_token, TokenType.StringConstant))
+        if current_token.count('\n') > 0:
+            self._tokens.append(Token(current_token, TokenType.StringConstant))
         return True
 
+    def _read_string_constant(self):
+        string = self.__regx_read_string_constant.match(self._code, self._index)
+        if string is None:
+            return None
+        string = string.group(0)
+        self._index += len(string)
+        return string
+
     def _try_read_operator(self):
-        index = self._index
-        if index >= len(self._code):
+        op = self.__regx_read_operator.match(self._code, self._index)
+        if op is None:
             return False
-        op1 = self._code[index]
-        op2 = self._code[index:index + 2] if index + 1 < len(self._code) else None
-        if op2 in self.OPERATIONS:
-            self._index += 2
-            self._tokens.append(Token(op2, TokenType.Operation, self._row))
-        elif op1 in self.OPERATIONS:
-            self._index += 1
-            self._tokens.append(Token(op1, TokenType.Operation, self._row))
-        else:
-            return False
+        op = op.group(0)
+        self._tokens.append(Token(op, TokenType.Operation))
+        self._index += len(op)
         return True
 
     def _read_symbol(self):
-        if self._index >= len(self._code):
-            return False
+        char = self._code[self._index]
+        self._tokens.append(Token(char, TokenType.Symbol))
         self._index += 1
-        char = self._code[self._index - 1]
-        self._tokens.append(
-            Token(char, TokenType.Symbol, self._row))
         return True
-
-    def _read_spaces(self):
-        spaces = ''
-        while self._index < len(self._code) and self._code[self._index].isspace():
-            spaces += self._code[self._index]
-            self._index += 1
-        return spaces
-
-    def _read_word(self):
-        word = ''
-        start = self._index
-        for char in self._code[start:]:
-            if char.isalnum() or char == '_':
-                word += char
-                self._index += 1
-            else:
-                break
-        return word
-
-    def _read_string_constant(self):
-        string = ''
-        open_quotation_mark = self._code[self._index]
-        self._index += 1
-        start = self._index
-        for char in self._code[start:]:
-            if char == '\n':
-                self._row += 1
-            if char != open_quotation_mark:
-                string += char
-                self._index += 1
-            else:
-                break
-        # если не нашли закрывающую кавычку (неправильно написанный код)
-        else:
-            self._index = start
-            return self._read_word()
-        self._index += 1
-        return string
 
     def _try_read_comment(self):
         return self._read_oneline_comment() or self._read_multiline_comment()
 
     def _read_oneline_comment(self):
-        regx_oneline_comment = r'(?<=^\/\/).*?(?=\n|$)'
-        result = search(regx_oneline_comment, self._code[self._index:])
-        if not result:
+        result = self.__regx_read_oneline_comment.match(self._code, self._index)
+        if result is None:
             return False
-        number = result.group(0)
-        self._tokens.append(Token(number, TokenType.Comment, self._row))
-        self._index += len(number) + 2
+        comment = result.group(0)
+        self._tokens.append(Token(comment, TokenType.Comment, self._row))
+        self._index += len(comment)
         return True
 
     def _read_multiline_comment(self):
-        regx_multiline_comment = r'(?<=^\/\*)([\w\W]*?)(?=\*\/)'
-        regx_without_closing_symbols = r'(?<=^\/\*)(.*?)(?= )'
-        result = search(regx_multiline_comment, self._code[self._index:])
-        complete_multiline_comment = True
-        if not result:
-            result = search(regx_without_closing_symbols, self._code[self._index:])
-            complete_multiline_comment = False
-            if not result:
-                return False
-        number = result.group(0)
-        self._tokens.append(Token(number, TokenType.Comment, self._row))
-        self._index += len(number) + 2
-        if complete_multiline_comment:
-            self._index += 2
+        result = self.__regx_read_multiline_comment.match(self._code, self._index)
+        if result is None:
+            return False
+        comment = result.group(0)
+        self._tokens.append(Token(comment, TokenType.Comment, self._row))
+        self._index += len(comment)
         return True
 
     def _try_read_number(self):
-        regx_real_numbers = r'((([0-9]*\.[0-9]+)|([0-9]+\.[0-9]*)|([0-9]+))[fFdDmM]{0})'
-        regx_integer_numbers = r'([0-9]+((UL)|(Ul)|(uL)|(ul)|(LU)|(Lu)|(lU)|(lu)|[uUlL]{0}))'
-        regx_numbers = rf'^({regx_real_numbers.format("")}|{regx_integer_numbers.format("")}' + \
-                       rf'|{regx_real_numbers.format("?")}|{regx_integer_numbers.format("?")})'
-        result = search(regx_numbers, self._code[self._index:])
-        if not result:
+        real_number = self.__regx_read_real_numbers.match(self._code, self._index)
+        integer_number = self.__regx_read_integer_numbers.match(self._code, self._index)
+        result = max(filter(None, [real_number, integer_number]), key=lambda res: len(res.group(0)), default=None)
+        if result is None:
             return False
         number = result.group(0)
         self._tokens.append(Token(number, TokenType.NumberConstant, self._row))
@@ -213,7 +210,7 @@ class Tokenizer:
                 'typeof', 'uint', 'ulong', 'unchecked', 'unsafe', 'ushort',
                 'using', 'virtual', 'void', 'volatile', 'while', 'var']
 
-    OPERATIONS = ['+', '-', '*', '/', '%', '=',
-                  '++', '--', '+=', '-=', '*=', '/=', '%=',
-                  '&&', '^', '||', '==', '!=', '>', '<', '<=', '>=',
-                  '<<', '>>', '&', '|', '^', '~', '?', '=>']
+    OPERATIONS = ['++', '--', '+=', '-=', '*=', '/=', '%=',
+                  '&&', '||', '==', '!=', '<=', '>=',
+                  '<<', '>>', '=>',
+                  '&', '|', '~', '?', '+', '-', '*', '/', '%', '=', '^', '>', '<']
