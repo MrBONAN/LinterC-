@@ -18,8 +18,8 @@ class TestSettings(unittest.TestCase):
         return Token(value, token_type)
 
     def test_max_line_length(self):
-        lines = """This is a very long line of text that exceeds the limit
-Short line"""
+        with open('test_max_line_length.txt', 'r') as f:
+            lines = f.read()
         result = self.settings.max_line_length(20, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: the number of characters in the line has been exceeded (55 > 20)"], result)
 
@@ -41,11 +41,8 @@ Short line"""
         self.assertEqual(["Line 1: there must be 1 empty line before the return (was: 0)"], result)
 
     def test_require_semicolons(self):
-        lines = """int a = 5
-if (true)
-{
-}
-"""
+        with open('test_require_semicolons.txt', 'r') as f:
+            lines = f.read()
         result = self.settings.require_semicolons(True, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: expected ;"], result)
 
@@ -61,8 +58,8 @@ if (true)
         self.assertEqual([], result)
 
     def test_camel_case(self):
-        lines = """camelCase
-PascalCase"""
+        with open('test_camel_case.txt', 'r') as f:
+            lines = f.read()
         result = self.settings.camel_case(True, self.parser.get_lines(lines))
         self.assertEqual([], result)
 
@@ -74,8 +71,8 @@ PascalCase"""
         self.assertEqual([], result)
 
     def test_always_use_braces(self):
-        lines = """if (true)
-return;"""
+        with open('test_always_use_braces.txt', 'r') as f:
+            lines = f.read()
         result = self.settings.always_use_braces(True, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: expected '{'"], result)
 
@@ -131,8 +128,8 @@ return;"""
         self.assertEqual([], result)
 
     def test_space_around_operators(self):
-        lines = """a+b;
-a=new List<int>();"""
+        with open('test_space_around_operators.txt', 'r') as f:
+            lines = f.read()
         result = self.settings.space_around_operators(True, self.parser.get_lines(lines))
         self.assertEqual(result, ["Line 1: expected spaces around '+'", "Line 2: expected spaces around '='"])
 
@@ -156,10 +153,7 @@ a=new List<int>();"""
         self.assertEqual(result, [])
 
     def test_file(self):
-        # Костыль
         example_code = 'example.cs'
-        if __name__ == "__main__":
-            example_code = 'tests/' + example_code
         with open(example_code, encoding='utf-8') as file:
             code = file.read()
 

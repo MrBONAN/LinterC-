@@ -1,0 +1,22 @@
+####################################################
+                 CHECKING THE STYLE                 
+####################################################
+--- always_use_braces ---
+Line 26: expected '{'
+Line 33: expected '{'
+Line 40: expected '{'
+
+Total errors: 3
+####################################################
+               ADDITIONAL INFORMATION               
+####################################################
+--- UNUSED VARIABLES ---
+Line 10: local variable 'a' value is not used
+Line 80: local variable 'variable' value is not used
+Line 20: local variable 'args' value is not used
+Line 8: method 'Calculate' is not used
+Line 20: method 'Main' is not used
+--- CYCLOMATIC COMPLEXITY ---
+Cyclomatic complexity of the entire code: 7
+Function: 'Calculate', cyclomatic complexity: 1
+Function: 'Main', cyclomatic complexity: 6

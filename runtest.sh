@@ -1,7 +1,7 @@
 #!/bin/bash
 
-coverage3 erase
+coverage erase
 find . -iname '*_tests.py' -type f -exec coverage3 run -a {} \;
-coverage3 report -m
-coverage3 html
+coverage report -m
+coverage html
 read tmp
