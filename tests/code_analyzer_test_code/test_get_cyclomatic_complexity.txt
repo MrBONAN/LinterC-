@@ -1,0 +1,25 @@
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        if (args.Length == 2)
+            return;
+        foreach (var arg in args.Skip(2))
+            Console.WriteLine(arg);
+    }
+
+    static int SecondFunction()
+    {
+        while (true) {
+            if (...) {
+                abracadabra;
+            } else if (...) {
+                simsalavim;
+            } else return 0;
+        }
+        if (...)
+            return -1;
+        return 0;
+    }
+}

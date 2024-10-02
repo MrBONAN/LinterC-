@@ -1,0 +1,7 @@
+var variable = some_function();
+Console.WriteLine(variable);
+var unused_variable;
+GetSomeVar(int a, int unused_arg)
+{
+    return a;
+}

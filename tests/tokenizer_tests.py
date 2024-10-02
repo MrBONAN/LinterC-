@@ -37,27 +37,13 @@ class MyTestCase(unittest.TestCase):
     def test_large_csharp_code(self):
         if __name__ != "tokenizer_tests":
             return
-        large_csharp_code = """
-using System;
-
-namespace HelloWorld
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            string message = "Hello, world!";
-            Console.WriteLine(message);
-        }
-    }
-}
-"""
+        with open("tokenizer_test_code/test_large_csharp_code.txt") as f:
+            large_csharp_code = f.read()
         result = self.parser.get_lines(large_csharp_code)
         self.print_lines(result)
 
     def test_space_tokens(self):
-        code = """some_code 
-        eight_spaces"""
+        code = """some_code \n        eight_spaces"""
         result = self.parser.get_tokens(code)
         self.assertEqual(5, len(result))
 
@@ -89,15 +75,15 @@ namespace HelloWorld
             self.assertEqual(op, token.value)
 
     def test_dont_delete_newline_character(self):
-        string = """some_string
-with_newline_character"""
+        with open("tokenizer_test_code/test_dont_delete_newline_character.txt") as f:
+            string = f.read()
         result = self.parser.get_tokens(string)
         self.assertEqual(3, len(result))
         self.assertEqual('\n', result[1].value)
 
     def test_dont_delete_newline_character_in_string(self):
-        string = '''"some_string
-with_newline_character"'''
+        with open("tokenizer_test_code/test_dont_delete_newline_character_in_string.txt") as f:
+            string = f.read()
         result = self.parser.get_tokens(string)
         self.assertEqual(2, len(result))
         self.assertEqual('\n', result[0].value[12])
@@ -108,17 +94,16 @@ with_newline_character"'''
         self.assertEqual(13, len(result))
 
     def test_oneline_comment(self):
-        code = """// this code do nothing
-var v = 0;"""
+        with open("tokenizer_test_code/test_oneline_comment.txt") as f:
+            code = f.read()
         result = self.parser.get_tokens(code)
         self.assertEqual(10, len(result))
         self.assertEqual(TokenType.Comment, result[0].token_type)
         self.assertEqual('// this code do nothing', result[0].value)
 
     def test_multiline_comment_1(self):
-        code = """/*- WOW, is this multiline comment?
-- Yes, it is!*/
-var v = 0;"""
+        with open("tokenizer_test_code/test_multiline_comment_1.txt") as f:
+            code = f.read()
         result = self.parser.get_tokens(code)
         self.assertEqual(10, len(result))
         self.assertEqual(TokenType.Comment, result[0].token_type)
@@ -210,20 +195,14 @@ var v = 0;"""
         self.assertEqual('.42f', result[4].value)
 
     def test_if_statement(self):
-        if_statement = """
-        if (true) {
-            identifier += value * 5;
-        }
-        """
+        with open("tokenizer_test_code/test_if_statement.txt") as f:
+            if_statement = f.read()
 
         result = self.parser.get_tokens(if_statement)
 
     def test_while_statement(self):
-        while_statement = """
-        while (5 > 4) {
-            Console.WriteLine("Wow, StringConstant");
-        }
-        """
+        with open("tokenizer_test_code/test_while_statement.txt") as f:
+            while_statement = f.read()
 
         self.parser.get_tokens(while_statement)
 

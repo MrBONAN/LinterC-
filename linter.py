@@ -2,6 +2,7 @@ from linter.stylecheck import Stylecheck
 from linter.tokenizer import Tokenizer
 import argparse
 
+
 def parse_args():
     """Разбор аргументов запуска"""
     parser = argparse.ArgumentParser(
@@ -35,12 +36,9 @@ def main():
     print(f'"{source_file}" has been loaded successfully.\n')
 
     stylecheck = Stylecheck()
-    tokenizer = Tokenizer(code)
-    lines = tokenizer.get_lines()
+    tokenizer = Tokenizer()
+    lines = tokenizer.get_lines(code)
     result = stylecheck.check(lines, config_file)
-
-    for line in result:
-        print(line)
 
     with open('result.txt', 'w', encoding='utf-8') as file:
         file.write(f'Your file: "{source_file}"\n')
@@ -49,6 +47,7 @@ def main():
 
     print('\nResult has been recorded into "result.txt"')
     input("\nPress Enter to quit...")
+
 
 if __name__ == '__main__':
     main()

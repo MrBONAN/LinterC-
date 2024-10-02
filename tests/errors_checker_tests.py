@@ -11,20 +11,16 @@ from linter.errors_checker import ErrorsChecker
 class MyTestCase(unittest.TestCase):
     parser = Tokenizer()
     def test_wrong_string_constant(self):
-        code = """
-"this string has has a closing quotation mark"
-"but this does not have a closing quotation mark
-"""
+        with (open("errors_checker_test_code/test_wrong_string_constant.txt")) as f:
+            code = f.read()
         lines = self.parser.get_lines(code)
         errors = ErrorsChecker.checking_for_errors(lines)
         self.assertEqual(1, len(errors), msg="The number of errors does not match")
         self.assertEqual('Line 3: the string does not have a closing quotation mark', errors[0])
 
     def test_wrong_multiline_comment(self):
-        code = """
-/*This multiline comment is good*/
-/*This multiline comments does not have a closing symbols
-"""
+        with (open("errors_checker_test_code/test_wrong_multiline_comment.txt")) as f:
+            code = f.read()
         lines = self.parser.get_lines(code)
         errors = ErrorsChecker.checking_for_errors(lines)
         self.assertEqual(1, len(errors), msg="The number of errors does not match")

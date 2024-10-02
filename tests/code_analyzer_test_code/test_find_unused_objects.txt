@@ -1,0 +1,22 @@
+
+namespace Geometry;
+
+
+public static class Geometry
+{
+    public static double GetLength(Vector a)
+    {
+        return Math.Sqrt(a.X * a.X + a.Y * a.Y);
+    }
+
+    public static Vector Sub(Vector a, Vector b)
+    {
+        return new Vector() { X = a.X - b.X, Y = a.Y - b.Y };
+    }
+
+    public static bool IsVectorInSegment(Vector a, Segment segment)
+    {
+        var leftHalf = Sub(segment.Begin, a);
+        ...
+    }
+}

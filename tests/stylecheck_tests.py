@@ -14,7 +14,7 @@ class MyTestCase(unittest.TestCase):
 
         with open(example_code, encoding='utf-8') as file:
             code = file.read()
-        with open('test_all_expected.txt', encoding='utf-8') as file:
+        with open('settings_test_code/test_all_expected.txt', encoding='utf-8') as file:
             expected = file.read().split('\n')
 
         tokenizer = Tokenizer()

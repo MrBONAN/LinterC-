@@ -1,0 +1,3 @@
+/*- WOW, is this multiline comment?
+- Yes, it is!*/
+var v = 0;

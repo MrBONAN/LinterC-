@@ -1,0 +1,2 @@
+some_string
+with_newline_character

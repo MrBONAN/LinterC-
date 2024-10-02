@@ -1,0 +1,2 @@
+// this code do nothing
+var v = 0;

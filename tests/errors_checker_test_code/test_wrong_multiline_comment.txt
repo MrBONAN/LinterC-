@@ -1,0 +1,3 @@
+
+/*This multiline comment is good*/
+/*This multiline comments does not have a closing symbols

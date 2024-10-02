@@ -18,7 +18,7 @@ class TestSettings(unittest.TestCase):
         return Token(value, token_type)
 
     def test_max_line_length(self):
-        with open('test_max_line_length.txt', 'r') as f:
+        with open('settings_test_code/test_max_line_length.txt', 'r') as f:
             lines = f.read()
         result = self.settings.max_line_length(20, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: the number of characters in the line has been exceeded (55 > 20)"], result)
@@ -41,7 +41,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(["Line 1: there must be 1 empty line before the return (was: 0)"], result)
 
     def test_require_semicolons(self):
-        with open('test_require_semicolons.txt', 'r') as f:
+        with open('settings_test_code/test_require_semicolons.txt', 'r') as f:
             lines = f.read()
         result = self.settings.require_semicolons(True, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: expected ;"], result)
@@ -58,7 +58,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual([], result)
 
     def test_camel_case(self):
-        with open('test_camel_case.txt', 'r') as f:
+        with open('settings_test_code/test_camel_case.txt', 'r') as f:
             lines = f.read()
         result = self.settings.camel_case(True, self.parser.get_lines(lines))
         self.assertEqual([], result)
@@ -71,7 +71,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual([], result)
 
     def test_always_use_braces(self):
-        with open('test_always_use_braces.txt', 'r') as f:
+        with open('settings_test_code/test_always_use_braces.txt', 'r') as f:
             lines = f.read()
         result = self.settings.always_use_braces(True, self.parser.get_lines(lines))
         self.assertEqual(["Line 1: expected '{'"], result)
@@ -128,7 +128,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual([], result)
 
     def test_space_around_operators(self):
-        with open('test_space_around_operators.txt', 'r') as f:
+        with open('settings_test_code/test_space_around_operators.txt', 'r') as f:
             lines = f.read()
         result = self.settings.space_around_operators(True, self.parser.get_lines(lines))
         self.assertEqual(result, ["Line 1: expected spaces around '+'", "Line 2: expected spaces around '='"])

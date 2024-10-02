@@ -1,0 +1,4 @@
+
+if (true) {
+    identifier += value * 5;
+}
